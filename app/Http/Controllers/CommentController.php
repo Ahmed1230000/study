@@ -18,25 +18,20 @@ class CommentController extends Controller
     public function index()
     {
         try {
-            $comment = QueryBuilder::for(Comment::class)
+            $comments = QueryBuilder::for(Comment::class)
                 ->allowedFilters(['comment', 'status', 'user_id', 'post_id'])
                 ->allowedSorts(['id', 'comment', 'status', 'user_id', 'post_id'])
                 ->allowedIncludes(['user', 'post'])
                 ->paginate(10);
-            if ($comment->isEmpty()) {
-                return response()->json([
-                    'message' => 'Not Found Any Comments',
-                    'data' => []
-                ], 200);
-            }
-            return response()->json([
-                'message' => 'Comments',
-                'data' => CommentResource::collection($comment)
-            ], 200);
+
+            return CommentResource::collection($comments)->additional([
+                'message' => 'Comments retrieved successfully',
+            ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Error: ' . $e->getMessage()
-            ], 400);
+                'message' => 'An error occurred while retrieving comments',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -48,46 +43,42 @@ class CommentController extends Controller
         try {
             DB::beginTransaction();
             $comment = Comment::create($request->validated());
-            $comment->save();
-            if ($comment) {
-                DB::commit();
-                return response()->json([
-                    'message' => 'Comment Created',
-                    'data' => CommentResource::make($comment)
-                ], 201);
-            }
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Comment created successfully',
+                'data' => CommentResource::make($comment),
+            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'message' => 'Error: ' . $e->getMessage()
-            ], 400);
+                'message' => 'An error occurred while creating the comment',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($comment)
+    public function show(Comment $comment)
     {
         try {
             $comment = QueryBuilder::for(Comment::class)
                 ->allowedFilters(['comment', 'status', 'user_id', 'post_id'])
                 ->allowedSorts(['id', 'comment', 'status', 'user_id', 'post_id'])
                 ->allowedIncludes(['user', 'post'])
-                ->findOrFail($comment);
-            if (!$comment) {
-                return response()->json([
-                    'message' => 'Comment Not Found'
-                ], 404);
-            }
+                ->findOrFail($comment->id);
+
             return response()->json([
-                'message' => 'Comment',
-                'data' => CommentResource::make($comment)
+                'message' => 'Comment retrieved successfully',
+                'data' => CommentResource::make($comment),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Error: ' . $e->getMessage()
-            ], 400);
+                'message' => 'An error occurred while retrieving the comment',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -99,19 +90,18 @@ class CommentController extends Controller
         try {
             DB::beginTransaction();
             $comment->update($request->validated());
-            $comment->save();
-            if ($comment) {
-                DB::commit();
-                return response()->json([
-                    'message' => 'Comment Updated',
-                    'data' => CommentResource::make($comment)
-                ], 200);
-            }
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Comment updated successfully',
+                'data' => CommentResource::make($comment),
+            ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
-                'message' => 'Error: ' . $e->getMessage()
-            ], 400);
+                'message' => 'An error occurred while updating the comment',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -121,17 +111,16 @@ class CommentController extends Controller
     public function destroy(Comment $comment)
     {
         try {
-            DB::beginTransaction();
             $comment->delete();
-            DB::commit();
+
             return response()->json([
-                'message' => 'Comment Deleted'
+                'message' => 'Comment deleted successfully',
             ], 200);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
-                'message' => 'Error: ' . $e->getMessage()
-            ], 400);
+                'message' => 'An error occurred while deleting the comment',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }
