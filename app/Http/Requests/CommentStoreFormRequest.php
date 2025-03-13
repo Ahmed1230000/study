@@ -26,7 +26,7 @@ class CommentStoreFormRequest extends FormRequest
     {
         return [
             'comment' => ['required', 'string'],
-            'status'  => ['sometimes', 'string', new Enum(StatusType::cases())],
+            'status'  => ['sometimes', 'string', new Enum(StatusType::class)],
             'user_id' => ['required', 'integer', Rule::exists('users', 'id')->whereNull('deleted_at')],
             'post_id' => ['required', 'integer', Rule::exists('posts', 'id')->whereNull('deleted_at')],
         ];
